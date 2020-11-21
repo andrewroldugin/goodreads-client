@@ -63,11 +63,11 @@
 
 ;; (get-user-id config)
 
-(defn get-books-xml [config user-id]
-  "Returns books xml string for specified user"
+(defn get-books-xml [config user-id shelf]
+  "Returns books xml string for specified user and shelf"
   (oauth-http-get config
                   "https://www.goodreads.com/review/list"
-                  {:v 2 :id user-id :key (:api-key config) :format "xml"}))
+                  {:v 2 :id user-id :key (:api-key config) :format "xml" :shelf shelf}))
 
 (defn parse-int [number-string]
   "Returns integer from string if possible otherwise nil"
@@ -80,15 +80,18 @@
         ids (xml-> z :GoodreadsResponse :reviews :review :book :id text)]
     (map parse-int ids)))
 
-(defn get-books [config user-id]
+(defn get-books [config user-id shelf]
   "Returns book ids for specified user"
-  (xml-get-books (get-books-xml config user-id)))
+  (xml-get-books (get-books-xml config user-id shelf)))
 
 ;; (def user-id (get-user-id config))
-;; (def str (get-books-xml config user-id))
-;; (def str (get-books-xml config (get-user-id config)))
+;; (def str (get-books-xml config user-id "currently-reading"))
 ;; (xml-get-books str)
-;; (get-books config (get-user-id config))
+;; (def str (get-books-xml config user-id "read"))
+;; (xml-get-books str)
+;; (def str (get-books-xml config (get-user-id config) "read"))
+;; (xml-get-books str)
+;; (get-books config (get-user-id config) "read")
 
 ;; TODO: this implementation is pretty useless :(
 (defn build-recommentations [{:keys [api-key api-secret oauth-token oauth-token-secret]}]
