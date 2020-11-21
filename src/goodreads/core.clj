@@ -19,6 +19,10 @@
   "Parses xml string"
   (-> str (.getBytes) (io/input-stream) (xml/parse)))
 
+(defn read-config [file]
+  "Reads edn config file"
+  (-> file (slurp) (edn/read-string)))
+
 (defn make-consumer [api-key api-secret]
   "Makes OAuth v1 consumer"
   (oauth/make-consumer api-key
@@ -149,10 +153,6 @@
                (map :name)
                (clojure.string/join ", "))
           link))
-
-(defn read-config [file]
-  "Reads edn config file"
-  (-> file (slurp) (edn/read-string)))
 
 (defn -main [& args]
   (let [{:keys [options errors summary]} (cli/parse-opts args cli-options)]
