@@ -1,14 +1,14 @@
 (ns goodreads.core
   (:gen-class)
   (:use [clojure.data.zip.xml])
-  (:require [clojure.java.io :as io]
+  (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.tools.cli :as cli]
-            [manifold.deferred :as d]
-            [clojure.edn :as edn]
+            [clojure.xml :as xml]
+            [clojure.zip :as zip]
             [oauth.client :as oauth]
             [clj-http.client :as http]
-            [clojure.xml :as xml]
-            [clojure.zip :as zip]))
+            [manifold.deferred :as d]))
 
 (defn parse-int [number-string]
   "Returns integer from string if possible otherwise nil"
