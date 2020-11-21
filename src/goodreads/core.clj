@@ -90,8 +90,7 @@
   "Returns book ids for specified user and shelf"
   (-> config (get-books-xml user-id shelf) (xml->books)))
 
-;; (def config (read-config "config.edn"))
-;; (get-books config (get-user-id config) "read")
+;; (let [config (read-config "config.edn")] (get-books config (get-user-id config) "read"))
 
 (defn get-book-xml [config book-id]
   "Returns book xml string by book id"
