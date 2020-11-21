@@ -52,9 +52,9 @@
     (xml1-> z :GoodreadsResponse :user (attr :id))))
 
 ;; (def config (edn/read-string (slurp "config.edn")))
-;; (def str (oauth-http-get config "https://www.goodreads.com/api/auth_user" {}))
-;; (println str)
-;; (xml-get-user-id str)
+;; (def xml-str (oauth-http-get config "https://www.goodreads.com/api/auth_user" {}))
+;; (println xml-str)
+;; (xml-get-user-id xml-str)
 ;; (get-user-id config)
 
 (defn get-user-id [config]
@@ -73,10 +73,6 @@
         ids (xml-> z :GoodreadsResponse :reviews :review :book :id text)]
     (map parse-int ids)))
 
-(defn get-books [config user-id shelf]
-  "Returns book ids for specified user and shelf"
-  (-> config (get-books-xml user-id shelf) (xml-get-books)))
-
 ;; (def config (edn/read-string (slurp "config.edn")))
 ;; (do (def user-id (get-user-id config)) user-id)
 ;; (def xml-str (get-books-xml config user-id "currently-reading"))
@@ -85,9 +81,43 @@
 ;; (xml-get-books xml-str)
 ;; (def xml-str (get-books-xml config (get-user-id config) "read"))
 ;; (xml-get-books xml-str)
+
+(defn get-books [config user-id shelf]
+  "Returns book ids for specified user and shelf"
+  (-> config (get-books-xml user-id shelf) (xml-get-books)))
+
+;; (def config (edn/read-string (slurp "config.edn")))
 ;; (get-books config (get-user-id config) "read")
 
+(defn get-book-xml [config book-id]
+  "Returns book xml string by book id"
+  (oauth-http-get config
+                  "https://www.goodreads.com/book/show"
+                  {:id book-id :key (:api-key config) :format "xml"}))
+
+;; (def config (edn/read-string (slurp "config.edn")))
+;; (do (def book-id (first (get-books config (get-user-id config) "read"))) book-id)
+;; (def xml-str (get-book-xml config book-id))
+
+(defn xml->similar-books [book-xml]
+  (let [z (-> xml-str (xml-parse-str) (zip/xml-zip))]
+    (vec (for [similar-book (xml-> z :GoodreadsResponse :book :similar_books :book)]
+           {:id (edn/read-string (xml1-> similar-book :id text))
+            :title (xml1-> similar-book :title text)
+            :link (xml1-> similar-book :link text)
+            :average-rating (edn/read-string (xml1-> similar-book :average_rating text))
+            :authors (vec (for [author (xml-> similar-book :authors :author)]
+                            {:name (xml1-> author :name text)}))}))))
+
+;; (xml->similar-books xml-str)
+
+(defn get-similar-books [config book-id]
+  (-> config (get-book-xml book-id) (xml->similar-books)))
+
+;; (get-similar-books config book-id)
+
 ;; TODO: this implementation is pretty useless :(
+;; TODO: remove previous TODO because this implementation is already pretty useful ;)
 (defn build-recommentations [{:keys [api-key api-secret oauth-token oauth-token-secret]}]
   (let [consumer (make-consumer api-key api-secret)
         user-params {:v 2 :id 124723493 :key api-key :format "xml"}
