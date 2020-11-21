@@ -63,6 +63,33 @@
 
 ;; (get-user-id config)
 
+(defn get-books-xml [config user-id]
+  "Returns books xml string for specified user"
+  (oauth-http-get config
+                  "https://www.goodreads.com/review/list"
+                  {:v 2 :id user-id :key (:api-key config) :format "xml"}))
+
+(defn parse-int [number-string]
+  "Returns integer from string if possible otherwise nil"
+  (try (Integer/parseInt number-string)
+       (catch Exception e nil)))
+
+(defn xml-get-books [str]
+  "Returns list of book ids from xml"
+  (let [z (-> str (xml-parse-str) (zip/xml-zip))
+        ids (xml-> z :GoodreadsResponse :reviews :review :book :id text)]
+    (map parse-int ids)))
+
+(defn get-books [config user-id]
+  "Returns book ids for specified user"
+  (xml-get-books (get-books-xml config user-id)))
+
+;; (def user-id (get-user-id config))
+;; (def str (get-books-xml config user-id))
+;; (def str (get-books-xml config (get-user-id config)))
+;; (xml-get-books str)
+;; (get-books config (get-user-id config))
+
 ;; TODO: this implementation is pretty useless :(
 (defn build-recommentations [{:keys [api-key api-secret oauth-token oauth-token-secret]}]
   (let [consumer (make-consumer api-key api-secret)
