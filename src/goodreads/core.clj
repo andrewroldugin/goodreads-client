@@ -67,23 +67,24 @@
                   "https://www.goodreads.com/review/list"
                   {:v 2 :id user-id :key (:api-key config) :format "xml" :shelf shelf}))
 
-(defn xml-get-books [str]
+(defn xml-get-books [xml-str]
   "Returns list of book ids from xml"
-  (let [z (-> str (xml-parse-str) (zip/xml-zip))
+  (let [z (-> xml-str (xml-parse-str) (zip/xml-zip))
         ids (xml-> z :GoodreadsResponse :reviews :review :book :id text)]
     (map parse-int ids)))
 
 (defn get-books [config user-id shelf]
-  "Returns book ids for specified user"
-  (xml-get-books (get-books-xml config user-id shelf)))
+  "Returns book ids for specified user and shelf"
+  (-> config (get-books-xml user-id shelf) (xml-get-books)))
 
-;; (def user-id (get-user-id config))
-;; (def str (get-books-xml config user-id "currently-reading"))
-;; (xml-get-books str)
-;; (def str (get-books-xml config user-id "read"))
-;; (xml-get-books str)
-;; (def str (get-books-xml config (get-user-id config) "read"))
-;; (xml-get-books str)
+;; (def config (edn/read-string (slurp "config.edn")))
+;; (do (def user-id (get-user-id config)) user-id)
+;; (def xml-str (get-books-xml config user-id "currently-reading"))
+;; (xml-get-books xml-str)
+;; (def xml-str (get-books-xml config user-id "read"))
+;; (xml-get-books xml-str)
+;; (def xml-str (get-books-xml config (get-user-id config) "read"))
+;; (xml-get-books xml-str)
 ;; (get-books config (get-user-id config) "read")
 
 ;; TODO: this implementation is pretty useless :(
