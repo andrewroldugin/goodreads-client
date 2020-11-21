@@ -121,7 +121,7 @@
 ;; (get-similar-books config book-id)
 
 (defn build-recommendations [config number-books]
-  (d/success-deferred
+  (d/future
    (let [user-id (get-user-id config)
          books-read (get-books config user-id "read")
          books-reading (into #{} (get-books config user-id "currently-reading"))]
