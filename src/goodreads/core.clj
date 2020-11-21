@@ -24,7 +24,17 @@
 ;;   (build-recommentations config)
 ;;   )
 
+(defn parse-int [number-string]
+  "Returns integer from string if possible otherwise nil"
+  (try (Integer/parseInt number-string)
+       (catch Exception e nil)))
+
+(defn xml-parse-str [str]
+  "Parses xml string"
+  (-> str (.getBytes) (io/input-stream) (xml/parse)))
+
 (defn make-consumer [api-key api-secret]
+  "Makes OAuth v1 consumer"
   (oauth/make-consumer api-key
                        api-secret
                        "https://www.goodreads.com/oauth/request_token"
@@ -33,6 +43,7 @@
                        :hmac-sha1))
 
 (defn oauth-http-get [config request-url user-params]
+  "Makes http GET request with OAuth v1 authorization"
   (let [consumer (make-consumer (:api-key config) (:api-secret config))
         credentials (oauth/credentials consumer
                                        (:oauth-token config)
@@ -44,9 +55,6 @@
         response (http/get request-url {:query-params query-params})]
     (when (= (:status response) 200)
       (:body response))))
-
-(defn xml-parse-str [str]
-  (-> str (.getBytes) (io/input-stream) (xml/parse)))
 
 (defn xml-get-user-id [str]
   "Returns user id from xml string"
@@ -68,11 +76,6 @@
   (oauth-http-get config
                   "https://www.goodreads.com/review/list"
                   {:v 2 :id user-id :key (:api-key config) :format "xml" :shelf shelf}))
-
-(defn parse-int [number-string]
-  "Returns integer from string if possible otherwise nil"
-  (try (Integer/parseInt number-string)
-       (catch Exception e nil)))
 
 (defn xml-get-books [str]
   "Returns list of book ids from xml"
