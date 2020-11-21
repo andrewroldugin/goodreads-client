@@ -132,7 +132,7 @@
           (remove #(books-reading (:id %)))
           (take number-books)))))
 
-;; (build-recommendations (read-config "config.edn") 10)
+;; @(build-recommendations (read-config "config.edn") 10)
 
 (def cli-options [["-t"
                    "--timeout-ms"
