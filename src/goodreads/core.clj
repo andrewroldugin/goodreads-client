@@ -137,7 +137,7 @@
 (def cli-options [["-t"
                    "--timeout-ms"
                    "Wait before finished"
-                   :default 5000
+                   :default 10000
                    :parse-fn #(Integer/parseInt %)]
                   ["-n"
                    "--number-books"
