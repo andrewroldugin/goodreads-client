@@ -100,7 +100,7 @@
 ;; (def xml-str (get-book-xml config book-id))
 
 (defn xml->similar-books [book-xml]
-  (let [z (-> xml-str (xml-parse-str) (zip/xml-zip))]
+  (let [z (-> book-xml (xml-parse-str) (zip/xml-zip))]
     (vec (for [similar-book (xml-> z :GoodreadsResponse :book :similar_books :book)]
            {:id (edn/read-string (xml1-> similar-book :id text))
             :title (xml1-> similar-book :title text)
@@ -116,32 +116,20 @@
 
 ;; (get-similar-books config book-id)
 
-;; TODO: this implementation is pretty useless :(
-;; TODO: remove previous TODO because this implementation is already pretty useful ;)
-(defn build-recommentations [{:keys [api-key api-secret oauth-token oauth-token-secret]}]
-  (let [consumer (make-consumer api-key api-secret)
-        user-params {:v 2 :id 124723493 :key api-key :format "xml"}
-        credentials (oauth/credentials consumer
-                                       oauth-token
-                                       oauth-token-secret
-                                       :GET
-                                       "https://www.goodreads.com/review/list"
-                                       user-params)
-        response (http/get "https://www.goodreads.com/review/list"
-                           {:query-params (merge credentials user-params)})]
-    (println ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-    (pprint (:body response))
-    )
+(defn build-recommendations [config number-books]
   (d/success-deferred
-   [{:title "My Side of the Mountain (Mountain, #1)"
-     :authors [{:name "Jean Craighead George"}]
-     :link "https://www.goodreads.com/book/show/41667.My_Side_of_the_Mountain"}
-    {:title "Incident at Hawk's Hill"
-     :authors [{:name "Allan W. Eckert"}]
-     :link "https://www.goodreads.com/book/show/438131.Incident_at_Hawk_s_Hill"}
-    {:title "The Black Pearl"
-     :authors [{:name "Scott O'Dell"}]
-     :link "https://www.goodreads.com/book/show/124245.The_Black_Pearl"}]))
+   (let [user-id (get-user-id config)
+         books-read (get-books config user-id "read")
+         books-reading (into #{} (get-books config user-id "currently-reading"))]
+     (->> books-read
+          (mapcat (partial get-similar-books config))
+          (sort-by :average-rating >)
+          (distinct)
+          (remove #(books-reading (:id %)))
+          (take number-books)))))
+
+;; (def config (edn/read-string (slurp "config.edn")))
+;; (build-recommendations config 36)
 
 (def cli-options [["-t"
                    "--timeout-ms"
@@ -170,7 +158,7 @@
       (some? errors) (do (println errors) (System/exit 1))
       (empty? args) (do (println "Please, specify user's token") (System/exit 1))
       :else (let [config (-> (first args) (slurp) (edn/read-string))
-                  books (-> (build-recommentations config)
+                  books (-> (build-recommendations config (:number-books options))
                             (d/timeout! (:timeout-ms options) ::timeout)
                             deref)]
               (cond
