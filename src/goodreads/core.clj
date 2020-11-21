@@ -10,20 +10,6 @@
             [clojure.xml :as xml]
             [clojure.zip :as zip]))
 
-;; (def config (edn/read-string (slurp "config.edn")))
-
-;; (build-recommentations config)
-;; (do
-;;   (build-recommentations config)
-;;   (build-recommentations config)
-;;   (build-recommentations config)
-;;   (build-recommentations config)
-;;   (build-recommentations config)
-;;   (build-recommentations config)
-;;   (build-recommentations config)
-;;   (build-recommentations config)
-;;   )
-
 (defn parse-int [number-string]
   "Returns integer from string if possible otherwise nil"
   (try (Integer/parseInt number-string)
@@ -56,20 +42,24 @@
     (when (= (:status response) 200)
       (:body response))))
 
-(defn xml-get-user-id [str]
-  "Returns user id from xml string"
-  (let [z (-> str (xml-parse-str) (zip/xml-zip))]
+(defn get-user-xml [config]
+  "Returns user xml"
+  (oauth-http-get config "https://www.goodreads.com/api/auth_user" {}))
+
+(defn xml-get-user-id [xml-str]
+  "Returns user id from user xml string"
+  (let [z (-> xml-str (xml-parse-str) (zip/xml-zip))]
     (xml1-> z :GoodreadsResponse :user (attr :id))))
 
+;; (def config (edn/read-string (slurp "config.edn")))
 ;; (def str (oauth-http-get config "https://www.goodreads.com/api/auth_user" {}))
+;; (println str)
 ;; (xml-get-user-id str)
+;; (get-user-id config)
 
 (defn get-user-id [config]
   "Returns user id"
-  (-> (oauth-http-get config "https://www.goodreads.com/api/auth_user" {})
-      (xml-get-user-id)))
-
-;; (get-user-id config)
+  (-> config (get-user-xml) (xml-get-user-id)))
 
 (defn get-books-xml [config user-id shelf]
   "Returns books xml string for specified user and shelf"
