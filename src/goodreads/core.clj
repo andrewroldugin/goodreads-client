@@ -1,5 +1,6 @@
 (ns goodreads.core
   (:gen-class)
+  (:use [clojure.data.zip.xml])
   (:require [clojure.java.io :as io]
             [clojure.tools.cli :as cli]
             [manifold.deferred :as d]
@@ -7,7 +8,6 @@
             [oauth.client :as oauth]
             [clj-http.client :as http]
             [clojure.xml :as xml]
-            [clojure.data.zip.xml :as zipxml]
             [clojure.zip :as zip]))
 
 ;; (def config (edn/read-string (slurp "config.edn")))
@@ -51,7 +51,7 @@
 (defn xml-get-user-id [str]
   "Returns user id from xml string"
   (let [z (-> str (xml-parse-str) (zip/xml-zip))]
-    (zipxml/xml1-> z :GoodreadsResponse :user (zipxml/attr :id))))
+    (xml1-> z :GoodreadsResponse :user (attr :id))))
 
 ;; (def str (oauth-http-get config "https://www.goodreads.com/api/auth_user" {}))
 ;; (xml-get-user-id str)
