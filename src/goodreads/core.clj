@@ -159,7 +159,7 @@
     (cond
       (contains? options :help) (do (println summary) (System/exit 0))
       (some? errors) (do (println errors) (System/exit 1))
-      (empty? args) (do (println "Please, specify user's token") (System/exit 1))
+      (empty? args) (do (println "Please, specify config file with user's token") (System/exit 1))
       :else (let [config (read-config (first args))
                   books (-> (build-recommendations config (:number-books options))
                             (d/timeout! (:timeout-ms options) ::timeout)
