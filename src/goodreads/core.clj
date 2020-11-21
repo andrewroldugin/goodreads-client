@@ -46,7 +46,7 @@
   "Returns user xml"
   (oauth-http-get config "https://www.goodreads.com/api/auth_user" {}))
 
-(defn xml-get-user-id [xml-str]
+(defn xml->user-id [xml-str]
   "Returns user id from user xml string"
   (let [z (-> xml-str (xml-parse-str) (zip/xml-zip))]
     (xml1-> z :GoodreadsResponse :user (attr :id))))
@@ -54,12 +54,12 @@
 ;; (def config (read-config "config.edn"))
 ;; (def xml-str (oauth-http-get config "https://www.goodreads.com/api/auth_user" {}))
 ;; (println xml-str)
-;; (xml-get-user-id xml-str)
+;; (xml->user-id xml-str)
 ;; (get-user-id (read-config "config.edn"))
 
 (defn get-user-id [config]
   "Returns user id"
-  (-> config (get-user-xml) (xml-get-user-id)))
+  (-> config (get-user-xml) (xml->user-id)))
 
 (defn get-books-xml [config user-id shelf]
   "Returns books xml string for specified user and shelf"
@@ -67,7 +67,7 @@
                   "https://www.goodreads.com/review/list"
                   {:v 2 :id user-id :key (:api-key config) :format "xml" :shelf shelf}))
 
-(defn xml-get-books [xml-str]
+(defn xml->books [xml-str]
   "Returns list of book ids from xml"
   (let [z (-> xml-str (xml-parse-str) (zip/xml-zip))
         ids (xml-> z :GoodreadsResponse :reviews :review :book :id text)]
@@ -76,15 +76,15 @@
 ;; (def config (read-config "config.edn"))
 ;; (do (def user-id (get-user-id config)) user-id)
 ;; (def xml-str (get-books-xml config user-id "currently-reading"))
-;; (xml-get-books xml-str)
+;; (xml->books xml-str)
 ;; (def xml-str (get-books-xml config user-id "read"))
-;; (xml-get-books xml-str)
+;; (xml->books xml-str)
 ;; (def xml-str (get-books-xml config (get-user-id config) "read"))
-;; (xml-get-books xml-str)
+;; (xml->books xml-str)
 
 (defn get-books [config user-id shelf]
   "Returns book ids for specified user and shelf"
-  (-> config (get-books-xml user-id shelf) (xml-get-books)))
+  (-> config (get-books-xml user-id shelf) (xml->books)))
 
 ;; (def config (read-config "config.edn"))
 ;; (get-books config (get-user-id config) "read")
