@@ -51,11 +51,11 @@
   (let [z (-> xml-str (xml-parse-str) (zip/xml-zip))]
     (xml1-> z :GoodreadsResponse :user (attr :id))))
 
-;; (def config (edn/read-string (slurp "config.edn")))
+;; (def config (read-config "config.edn"))
 ;; (def xml-str (oauth-http-get config "https://www.goodreads.com/api/auth_user" {}))
 ;; (println xml-str)
 ;; (xml-get-user-id xml-str)
-;; (get-user-id config)
+;; (get-user-id (read-config "config.edn"))
 
 (defn get-user-id [config]
   "Returns user id"
@@ -73,7 +73,7 @@
         ids (xml-> z :GoodreadsResponse :reviews :review :book :id text)]
     (map parse-int ids)))
 
-;; (def config (edn/read-string (slurp "config.edn")))
+;; (def config (read-config "config.edn"))
 ;; (do (def user-id (get-user-id config)) user-id)
 ;; (def xml-str (get-books-xml config user-id "currently-reading"))
 ;; (xml-get-books xml-str)
@@ -86,7 +86,7 @@
   "Returns book ids for specified user and shelf"
   (-> config (get-books-xml user-id shelf) (xml-get-books)))
 
-;; (def config (edn/read-string (slurp "config.edn")))
+;; (def config (read-config "config.edn"))
 ;; (get-books config (get-user-id config) "read")
 
 (defn get-book-xml [config book-id]
@@ -95,7 +95,7 @@
                   "https://www.goodreads.com/book/show"
                   {:id book-id :key (:api-key config) :format "xml"}))
 
-;; (def config (edn/read-string (slurp "config.edn")))
+;; (def config (read-config "config.edn"))
 ;; (do (def book-id (first (get-books config (get-user-id config) "read"))) book-id)
 ;; (def xml-str (get-book-xml config book-id))
 
@@ -128,8 +128,7 @@
           (remove #(books-reading (:id %)))
           (take number-books)))))
 
-;; (def config (edn/read-string (slurp "config.edn")))
-;; (build-recommendations config 36)
+;; (build-recommendations (read-config "config.edn") 10)
 
 (def cli-options [["-t"
                    "--timeout-ms"
@@ -151,13 +150,17 @@
                (clojure.string/join ", "))
           link))
 
+(defn read-config [file]
+  "Reads edn config file"
+  (-> file (slurp) (edn/read-string)))
+
 (defn -main [& args]
   (let [{:keys [options errors summary]} (cli/parse-opts args cli-options)]
     (cond
       (contains? options :help) (do (println summary) (System/exit 0))
       (some? errors) (do (println errors) (System/exit 1))
       (empty? args) (do (println "Please, specify user's token") (System/exit 1))
-      :else (let [config (-> (first args) (slurp) (edn/read-string))
+      :else (let [config (read-config (first args))
                   books (-> (build-recommendations config (:number-books options))
                             (d/timeout! (:timeout-ms options) ::timeout)
                             deref)]
