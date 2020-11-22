@@ -120,15 +120,18 @@
 ;; (get-similar-books config book-id)
 
 (defn build-recommendations [config number-books]
+  "Returns top by average rating similar books of read books
+ excluding books that are currently reading."
   (d/future
    (let [user-id (get-user-id config)
          books-read (get-books config user-id "read")
-         books-reading (into #{} (get-books config user-id "currently-reading"))]
+         books-reading (into #{} (get-books config user-id "currently-reading"))
+         pipe [(mapcat (partial get-similar-books config))
+               (distinct)
+               (remove #(books-reading (:id %)))]]
      (->> books-read
-          (mapcat (partial get-similar-books config))
+          (sequence (apply comp pipe))
           (sort-by :average-rating >)
-          (distinct)
-          (remove #(books-reading (:id %)))
           (take number-books)))))
 
 ;; @(build-recommendations (read-config "config.edn") 10)
