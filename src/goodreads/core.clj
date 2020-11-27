@@ -46,30 +46,11 @@
     (when (= (:status response) 200)
       (:body response))))
 
-(defn get-user-xml [config]
-  "Returns user xml"
-  (oauth-http-get config "https://www.goodreads.com/api/auth_user" {}))
-
-(defn xml->user-id [xml-str]
-  "Returns user id from user xml string"
-  (let [z (-> xml-str (xml-parse-str) (zip/xml-zip))]
-    (xml1-> z :GoodreadsResponse :user (attr :id))))
-
-;; (def config (read-config "config.edn"))
-;; (def xml-str (oauth-http-get config "https://www.goodreads.com/api/auth_user" {}))
-;; (println xml-str)
-;; (xml->user-id xml-str)
-;; (get-user-id (read-config "config.edn"))
-
-(defn get-user-id [config]
-  "Returns user id"
-  (-> config (get-user-xml) (xml->user-id)))
-
-(defn get-books-xml [config user-id shelf]
-  "Returns books xml string for specified user and shelf"
+(defn get-books-xml [config shelf]
+  "Returns books xml string for specified shelf"
   (oauth-http-get config
                   "https://www.goodreads.com/review/list"
-                  {:v 2 :id user-id :key (:api-key config) :format "xml" :shelf shelf}))
+                  {:v 2 :key (:api-key config) :format "xml" :shelf shelf}))
 
 (defn xml->books [xml-str]
   "Returns list of book ids from xml"
@@ -77,18 +58,14 @@
         ids (xml-> z :GoodreadsResponse :reviews :review :book :id text)]
     (map parse-int ids)))
 
-;; (def config (read-config "config.edn"))
-;; (do (def user-id (get-user-id config)) user-id)
-;; (def xml-str (get-books-xml config user-id "currently-reading"))
+;; (def xml-str (get-books-xml (read-config "config.edn") "currently-reading"))
 ;; (xml->books xml-str)
-;; (def xml-str (get-books-xml config user-id "read"))
-;; (xml->books xml-str)
-;; (def xml-str (get-books-xml config (get-user-id config) "read"))
+;; (def xml-str (get-books-xml (read-config "config.edn") "read"))
 ;; (xml->books xml-str)
 
-(defn get-books [config user-id shelf]
+(defn get-books [config shelf]
   "Returns book ids for specified user and shelf"
-  (-> config (get-books-xml user-id shelf) (xml->books)))
+  (-> config (get-books-xml shelf) (xml->books)))
 
 ;; (let [config (read-config "config.edn")] (get-books config (get-user-id config) "read"))
 
@@ -123,9 +100,8 @@
   "Returns top by average rating similar books of read books
  excluding books that are currently reading."
   (d/future
-   (let [user-id (get-user-id config)
-         books-read (get-books config user-id "read")
-         books-reading (into #{} (get-books config user-id "currently-reading"))
+   (let [books-read (get-books config "read")
+         books-reading (into #{} (get-books config "currently-reading"))
          pipe [(mapcat (partial get-similar-books config))
                (distinct)
                (remove #(books-reading (:id %)))]]
