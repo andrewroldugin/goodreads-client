@@ -47,9 +47,9 @@
                   "https://www.goodreads.com/review/list"
                   {:v 2 :key (:api-key config) :format "xml" :per_page 200}))
 
-(defn xml->books [s shelf]
+(defn xml->books [books-xml shelf]
   "Returns list of book ids from xml for specified shelf"
-  (let [z (-> s (xml-parse-str) (zip/xml-zip))
+  (let [z (-> books-xml (xml-parse-str) (zip/xml-zip))
         reviews (xml-> z :GoodreadsResponse :reviews :review [:shelves :shelf (attr= :name shelf)])]
     (map #(-> % (xml1-> :review :book :id text) (edn/read-string)) reviews)))
 
