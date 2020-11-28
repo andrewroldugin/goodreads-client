@@ -46,28 +46,21 @@
     (when (= (:status response) 200)
       (:body response))))
 
-(defn get-books-xml [config shelf]
-  "Returns books xml string for specified shelf"
+(defn get-books-xml [config]
+  "Returns books xml string"
   (oauth-http-get config
                   "https://www.goodreads.com/review/list"
-                  {:v 2 :key (:api-key config) :format "xml" :shelf shelf}))
+                  {:v 2 :key (:api-key config) :format "xml" :per_page 200}))
 
-(defn xml->books [xml-str]
-  "Returns list of book ids from xml"
-  (let [z (-> xml-str (xml-parse-str) (zip/xml-zip))
-        ids (xml-> z :GoodreadsResponse :reviews :review :book :id text)]
-    (map parse-int ids)))
+(defn xml->books [s shelf]
+  "Returns list of book ids from xml for specified shelf"
+  (let [z (-> s (xml-parse-str) (zip/xml-zip))
+        reviews (xml-> z :GoodreadsResponse :reviews :review [:shelves :shelf (attr= :name shelf)])]
+    (map #(-> % (xml1-> :review :book :id text) (edn/read-string)) reviews)))
 
-;; (def xml-str (get-books-xml (read-config "config.edn") "currently-reading"))
-;; (xml->books xml-str)
-;; (def xml-str (get-books-xml (read-config "config.edn") "read"))
-;; (xml->books xml-str)
-
-(defn get-books [config shelf]
-  "Returns book ids for specified user and shelf"
-  (-> config (get-books-xml shelf) (xml->books)))
-
-;; (let [config (read-config "config.edn")] (get-books config (get-user-id config) "read"))
+;; (def xml-str (get-books-xml (read-config "config.edn")))
+;; (xml->books xml-str "read")
+;; (xml->books xml-str "currently-reading")
 
 (defn get-book-xml [config book-id]
   "Returns book xml string by book id"
@@ -100,15 +93,16 @@
   "Returns top by average rating similar books of read books
  excluding books that are currently reading."
   (d/future
-   (let [books-read (get-books config "read")
-         books-reading (into #{} (get-books config "currently-reading"))
-         pipe [(mapcat (partial get-similar-books config))
-               (distinct)
-               (remove #(books-reading (:id %)))]]
-     (->> books-read
-          (sequence (apply comp pipe))
-          (sort-by :average-rating >)
-          (take number-books)))))
+    (let [books-xml (get-books-xml config)
+          books-read (xml->books books-xml "read")
+          books-reading (into #{} (xml->books books-xml "currently-reading"))
+          pipe [(mapcat (partial get-similar-books config))
+                (distinct)
+                (remove #(books-reading (:id %)))]]
+      (->> books-read
+           (sequence (apply comp pipe))
+           (sort-by :average-rating >)
+           (take number-books)))))
 
 ;; @(build-recommendations (read-config "config.edn") 10)
 
