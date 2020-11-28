@@ -68,13 +68,13 @@
 
 (defn xml->similar-books [book-xml]
   (let [z (-> book-xml (xml-parse-str) (zip/xml-zip))]
-    (vec (for [similar-book (xml-> z :GoodreadsResponse :book :similar_books :book)]
-           {:id (edn/read-string (xml1-> similar-book :id text))
-            :title (xml1-> similar-book :title text)
-            :link (xml1-> similar-book :link text)
-            :average-rating (edn/read-string (xml1-> similar-book :average_rating text))
-            :authors (vec (for [author (xml-> similar-book :authors :author)]
-                            {:name (xml1-> author :name text)}))}))))
+    (for [similar-book (xml-> z :GoodreadsResponse :book :similar_books :book)]
+      {:id (edn/read-string (xml1-> similar-book :id text))
+       :title (xml1-> similar-book :title text)
+       :link (xml1-> similar-book :link text)
+       :average-rating (edn/read-string (xml1-> similar-book :average_rating text))
+       :authors (vec (for [author (xml-> similar-book :authors :author)]
+                       {:name (xml1-> author :name text)}))})))
 
 ;; (xml->similar-books bxml)
 
