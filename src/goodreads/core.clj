@@ -92,12 +92,12 @@
           books-reading (into #{} (xml->books books-xml "currently-reading"))]
       (reduce
        (fn [acc x]
-         (take number-books
-               (->> (get-similar-books config x)
-                    (remove #(books-reading (:id %)))
-                    (concat acc)
-                    (distinct)
-                    (sort-by :average-rating >))))
+         (->> (get-similar-books config x)
+              (remove #(books-reading (:id %)))
+              (concat acc)
+              (distinct)
+              (sort-by :average-rating >)
+              (take number-books)))
        []
        books-read))))
 
