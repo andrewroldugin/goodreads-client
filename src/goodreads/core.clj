@@ -98,14 +98,13 @@
           books-reading (into #{} (xml->books books-xml "currently-reading"))]
       (reduce
        (fn [acc x]
-         (set
-          (take number-books
-                (sort-by :average-rating >
-                         (apply conj acc
-                                (->> x
-                                     (get-similar-books config)
-                                     (remove #(books-reading (:id %)))))))))
-       #{}
+         (take number-books
+               (->> (get-similar-books config x)
+                    (remove #(books-reading (:id %)))
+                    (concat acc)
+                    (distinct)
+                    (sort-by :average-rating >))))
+       []
        books-read))))
 
 ;; @(build-recommendations (read-config "config.edn") 10)
