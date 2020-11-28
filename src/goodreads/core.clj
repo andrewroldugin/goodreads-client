@@ -67,6 +67,7 @@
 ;; (def bxml (get-book-xml (read-config "config.edn") bid))
 
 (defn xml->similar-books [book-xml]
+  "Returns list of similar books from book xml"
   (let [z (-> book-xml (xml-parse-str) (zip/xml-zip))]
     (for [similar-book (xml-> z :GoodreadsResponse :book :similar_books :book)]
       {:id (edn/read-string (xml1-> similar-book :id text))
@@ -79,6 +80,7 @@
 ;; (xml->similar-books bxml)
 
 (defn get-similar-books [config book-id]
+  "Returns list of similar books for specified book id"
   (-> config (get-book-xml book-id) (xml->similar-books)))
 
 (defn build-recommendations [config number-books]
