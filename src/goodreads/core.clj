@@ -84,8 +84,8 @@
   (-> config (get-book-xml book-id) (xml->similar-books)))
 
 (defn build-recommendations [config number-books]
-  "Returns top by average rating similar books of read books
- excluding books that are currently reading."
+  "Returns top number-books by average rating similar books of read books
+ excluding books that user is currently reading."
   (d/future
     (let [books-xml (get-books-xml config)
           books-read (xml->books books-xml "read")
