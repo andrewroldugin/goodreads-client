@@ -10,11 +10,6 @@
             [clj-http.client :as http]
             [manifold.deferred :as d]))
 
-(defn parse-int [number-string]
-  "Returns integer from string if possible otherwise nil"
-  (try (Integer/parseInt number-string)
-       (catch Exception e nil)))
-
 (defn xml-parse-str [str]
   "Parses xml string"
   (-> str (.getBytes) (io/input-stream) (xml/parse)))
