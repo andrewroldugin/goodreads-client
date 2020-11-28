@@ -95,14 +95,18 @@
   (d/future
     (let [books-xml (get-books-xml config)
           books-read (xml->books books-xml "read")
-          books-reading (into #{} (xml->books books-xml "currently-reading"))
-          pipe [(mapcat (partial get-similar-books config))
-                (distinct)
-                (remove #(books-reading (:id %)))]]
-      (->> books-read
-           (sequence (apply comp pipe))
-           (sort-by :average-rating >)
-           (take number-books)))))
+          books-reading (into #{} (xml->books books-xml "currently-reading"))]
+      (reduce
+       (fn [acc x]
+         (set
+          (take number-books
+                (sort-by :average-rating >
+                         (apply conj acc
+                                (->> x
+                                     (get-similar-books config)
+                                     (remove #(books-reading (:id %)))))))))
+       #{}
+       books-read))))
 
 ;; @(build-recommendations (read-config "config.edn") 10)
 
