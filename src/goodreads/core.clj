@@ -58,9 +58,9 @@
         reviews (xml-> z :GoodreadsResponse :reviews :review [:shelves :shelf (attr= :name shelf)])]
     (map #(-> % (xml1-> :review :book :id text) (edn/read-string)) reviews)))
 
-;; (def xml-str (get-books-xml (read-config "config.edn")))
-;; (xml->books xml-str "read")
-;; (xml->books xml-str "currently-reading")
+;; (def bsxml (get-books-xml (read-config "config.edn")))
+;; (xml->books bsxml "read")
+;; (xml->books bsxml "currently-reading")
 
 (defn get-book-xml [config book-id]
   "Returns book xml string by book id"
@@ -68,9 +68,8 @@
                   "https://www.goodreads.com/book/show"
                   {:id book-id :key (:api-key config) :format "xml"}))
 
-;; (def config (read-config "config.edn"))
-;; (do (def book-id (first (get-books config (get-user-id config) "read"))) book-id)
-;; (def xml-str (get-book-xml config book-id))
+;; (do (def bid (first (xml->books bsxml "read"))) bid)
+;; (def bxml (get-book-xml (read-config "config.edn") bid))
 
 (defn xml->similar-books [book-xml]
   (let [z (-> book-xml (xml-parse-str) (zip/xml-zip))]
@@ -82,12 +81,10 @@
             :authors (vec (for [author (xml-> similar-book :authors :author)]
                             {:name (xml1-> author :name text)}))}))))
 
-;; (xml->similar-books xml-str)
+;; (xml->similar-books bxml)
 
 (defn get-similar-books [config book-id]
   (-> config (get-book-xml book-id) (xml->similar-books)))
-
-;; (get-similar-books config book-id)
 
 (defn build-recommendations [config number-books]
   "Returns top by average rating similar books of read books
